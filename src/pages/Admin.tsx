@@ -153,7 +153,7 @@ const Admin = () => {
       const clientsData = await getAllClients();
       const clientsWithDetails = await Promise.all(
         clientsData.map(async (client) => {
-          const clientAppointments = appointmentsData.filter(a => a.userId === client.id);
+          const clientAppointments = appointmentsData.filter(a => a.clientId === client.id);
           const totalSpent = clientAppointments
             .filter(a => a.status === 'completed')
             .reduce((sum, a) => sum + (a.price || 0), 0);

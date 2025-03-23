@@ -139,23 +139,9 @@ export const getAllAppointments = async (): Promise<Appointment[]> => {
     return appointmentsSnapshot.docs.map(doc => ({
       id: doc.id,
       ...doc.data()
-    })) as Appointment[];
-  } catch (error) {
-    console.error('Erro ao buscar agendamentos:', error);
-    throw error;
-  }
-};
-
-export const getAllClients = async () => {
-  try {
-    const usersRef = collection(db, 'users');
-    const usersSnapshot = await getDocs(usersRef);
-    return usersSnapshot.docs.map(doc => ({
-      id: doc.id,
-      ...doc.data()
     }));
   } catch (error) {
-    console.error('Erro ao buscar clientes:', error);
+    console.error('Erro ao buscar agendamentos:', error);
     throw error;
   }
 };
