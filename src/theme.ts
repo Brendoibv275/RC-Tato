@@ -4,18 +4,14 @@ const theme = createTheme({
   palette: {
     mode: 'dark',
     primary: {
-      main: '#FF4D4D', // Vermelho tradicional de tatuagem
-      light: '#FF6B6B',
-      dark: '#CC3D3D',
+      main: '#FF4D4D',
     },
     secondary: {
-      main: '#2C2C2C', // Preto profundo
-      light: '#404040',
-      dark: '#1A1A1A',
+      main: '#FF6B6B',
     },
     background: {
       default: '#121212',
-      paper: '#1E1E1E',
+      paper: '#1e1e1e',
     },
     text: {
       primary: '#FFFFFF',
@@ -23,7 +19,7 @@ const theme = createTheme({
     },
   },
   typography: {
-    fontFamily: '"Playfair Display", "Roboto", "Helvetica", "Arial", sans-serif',
+    fontFamily: '"Roboto", "Helvetica", "Arial", sans-serif',
     h1: {
       fontFamily: '"Playfair Display", serif',
       fontWeight: 700,

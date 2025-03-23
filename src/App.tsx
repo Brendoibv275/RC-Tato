@@ -1,11 +1,12 @@
 import React, { Suspense, useEffect, useState } from 'react';
 import { BrowserRouter as Router, Routes, Route, useLocation, Navigate } from 'react-router-dom';
-import { ThemeProvider } from '@mui/material/styles';
-import CssBaseline from '@mui/material/CssBaseline';
-import LoadingScreen from './components/LoadingScreen';
+import { ThemeProvider, CssBaseline, Box } from '@mui/material';
+import { AuthProvider } from './contexts/AuthContext';
 import Navbar from './components/Navbar';
+import Footer from './components/Footer';
 import theme from './theme';
 import { useAuth } from './contexts/AuthContext';
+import LoadingScreen from './components/LoadingScreen';
 
 // Lazy loading das páginas
 const Home = React.lazy(() => import('./pages/Home'));
@@ -54,67 +55,78 @@ function App() {
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
-      <Router>
-        <Navbar />
-        <Suspense fallback={<LoadingScreen />}>
-          <Routes>
-            <Route
-              path="/"
-              element={
-                <PageContainer>
-                  <Home />
-                </PageContainer>
-              }
-            />
-            <Route
-              path="/login"
-              element={
-                <PageContainer>
-                  <Login />
-                </PageContainer>
-              }
-            />
-            <Route
-              path="/register"
-              element={
-                <PageContainer>
-                  <Register />
-                </PageContainer>
-              }
-            />
-            <Route
-              path="/schedule"
-              element={
-                <PrivateRoute>
-                  <PageContainer>
-                    <Schedule />
-                  </PageContainer>
-                </PrivateRoute>
-              }
-            />
-            <Route
-              path="/profile"
-              element={
-                <PrivateRoute>
-                  <PageContainer>
-                    <Profile />
-                  </PageContainer>
-                </PrivateRoute>
-              }
-            />
-            <Route
-              path="/admin"
-              element={
-                <PrivateRoute>
-                  <PageContainer>
-                    <Admin />
-                  </PageContainer>
-                </PrivateRoute>
-              }
-            />
-          </Routes>
-        </Suspense>
-      </Router>
+      <AuthProvider>
+        <Router>
+          <Box sx={{ 
+            display: 'flex', 
+            flexDirection: 'column',
+            minHeight: '100vh'
+          }}>
+            <Navbar />
+            <Box component="main" sx={{ flexGrow: 1 }}>
+              <Suspense fallback={<LoadingScreen />}>
+                <Routes>
+                  <Route
+                    path="/"
+                    element={
+                      <PageContainer>
+                        <Home />
+                      </PageContainer>
+                    }
+                  />
+                  <Route
+                    path="/login"
+                    element={
+                      <PageContainer>
+                        <Login />
+                      </PageContainer>
+                    }
+                  />
+                  <Route
+                    path="/register"
+                    element={
+                      <PageContainer>
+                        <Register />
+                      </PageContainer>
+                    }
+                  />
+                  <Route
+                    path="/schedule"
+                    element={
+                      <PrivateRoute>
+                        <PageContainer>
+                          <Schedule />
+                        </PageContainer>
+                      </PrivateRoute>
+                    }
+                  />
+                  <Route
+                    path="/profile"
+                    element={
+                      <PrivateRoute>
+                        <PageContainer>
+                          <Profile />
+                        </PageContainer>
+                      </PrivateRoute>
+                    }
+                  />
+                  <Route
+                    path="/admin"
+                    element={
+                      <PrivateRoute>
+                        <PageContainer>
+                          <Admin />
+                        </PageContainer>
+                      </PrivateRoute>
+                    }
+                  />
+                </Routes>
+              </Suspense>
+            </Box>
+            <Footer />
+          </Box>
+        </Router>
+      </AuthProvider>
     </ThemeProvider>
   );
 }
