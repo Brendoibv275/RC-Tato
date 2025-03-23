@@ -57,28 +57,12 @@ const NavButton = styled(Button)(({ theme }) => ({
 
 const Navbar = () => {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, isAdmin } = useAuth();
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
-  const [isAdmin, setIsAdmin] = useState(false);
   const theme = useTheme();
   const trigger = useScrollTrigger({
     threshold: 100,
   });
-
-  useEffect(() => {
-    const checkAdminStatus = async () => {
-      if (user) {
-        try {
-          const userData = await getUserData(user.uid);
-          setIsAdmin(userData?.isAdmin || false);
-        } catch (error) {
-          console.error('Erro ao verificar status de admin:', error);
-        }
-      }
-    };
-
-    checkAdminStatus();
-  }, [user]);
 
   const handleMenu = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorEl(event.currentTarget);
@@ -189,13 +173,25 @@ const Navbar = () => {
                   </Menu>
                 </>
               ) : (
-                <Button
-                  component={Link}
-                  to="/login"
-                  sx={{ color: 'white' }}
-                >
-                  Login
-                </Button>
+                <Box sx={{ display: 'flex', gap: 2 }}>
+                  <Button
+                    component={Link}
+                    to="/login"
+                    color="inherit"
+                    sx={{ my: 2 }}
+                  >
+                    Login
+                  </Button>
+                  <Button
+                    component={Link}
+                    to="/register"
+                    variant="contained"
+                    color="primary"
+                    sx={{ my: 2 }}
+                  >
+                    Cadastrar
+                  </Button>
+                </Box>
               )}
             </Box>
           </Toolbar>

@@ -50,7 +50,7 @@ import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 
 const Profile = () => {
-  const { user } = useAuth();
+  const { user, isAdmin } = useAuth();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [userData, setUserData] = useState<any>(null);
@@ -235,7 +235,7 @@ const Profile = () => {
                 {userData?.phone || 'Telefone não cadastrado'}
               </Typography>
 
-              {userData?.isAdmin && (
+              {isAdmin && (
                 <Button
                   variant="contained"
                   color="primary"
