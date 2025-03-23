@@ -15,10 +15,6 @@ import {
   Snackbar,
   Alert,
   SelectChangeEvent,
-  Card,
-  CardContent,
-  CardMedia,
-  Chip,
   useTheme,
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
@@ -27,64 +23,19 @@ import { useAuth } from '../contexts/AuthContext';
 import { getUserData } from '../services/authService';
 import { Timestamp } from 'firebase/firestore';
 import { motion } from 'framer-motion';
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
+import { DatePicker } from '@mui/x-date-pickers/DatePicker';
+import { ptBR } from 'date-fns/locale';
 
 const FormPaper = styled(Paper)(({ theme }) => ({
   padding: theme.spacing(4),
   backgroundColor: '#1e1e1e',
   borderRadius: '16px',
   boxShadow: '0 8px 32px rgba(0,0,0,0.3)',
+  maxWidth: '600px',
+  margin: '0 auto',
 }));
-
-const ServiceCard = styled(Card)(({ theme }) => ({
-  height: '100%',
-  display: 'flex',
-  flexDirection: 'column',
-  backgroundColor: 'rgba(30, 30, 30, 0.8)',
-  backdropFilter: 'blur(10px)',
-  transition: 'all 0.3s ease-in-out',
-  position: 'relative',
-  overflow: 'hidden',
-  '&::before': {
-    content: '""',
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    height: '4px',
-    background: 'linear-gradient(90deg, #FF4D4D, #FF6B6B)',
-  },
-  '&:hover': {
-    transform: 'translateY(-5px)',
-    boxShadow: '0 8px 24px rgba(255, 77, 77, 0.2)',
-  },
-}));
-
-const services = [
-  {
-    title: 'Tatuagem Minimalista',
-    description: 'Designs simples e elegantes que transmitem mensagens poderosas com traços sutis.',
-    image: '/services/minimalist.jpg',
-    price: 'R$ 50,00 individual',
-    promo: '5 por R$ 150,00',
-    isPromo: true,
-  },
-  {
-    title: 'Cover-up',
-    description: 'Transforme suas tatuagens antigas em novas obras de arte. Preço avaliado por trabalho.',
-    image: '/services/cover-up.jpg',
-    price: 'A partir de R$ 200',
-    promo: 'Preço sob consulta',
-    isPromo: false,
-  },
-  {
-    title: 'Tatuagem Autoral',
-    description: 'Designs exclusivos e personalizados, criados especialmente para você.',
-    image: '/services/artistic.jpg',
-    price: 'A partir de R$ 150',
-    promo: 'Preço sob consulta',
-    isPromo: false,
-  },
-];
 
 const Schedule = () => {
   const navigate = useNavigate();
@@ -172,8 +123,35 @@ const Schedule = () => {
     }
   };
 
+  const handleDateChange = (date: Date | null) => {
+    if (date) {
+      const formattedDate = date.toISOString().split('T')[0];
+      setFormData(prev => ({
+        ...prev,
+        date: formattedDate,
+        time: '', // Limpa o horário selecionado quando a data muda
+      }));
+      generateAvailableTimes(formattedDate);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Validação dos campos obrigatórios
+    if (!formData.clientName.trim() || 
+        !formData.phone.trim() || 
+        !formData.service || 
+        !formData.date || 
+        !formData.time) {
+      setSnackbar({
+        open: true,
+        message: 'Por favor, preencha todos os campos obrigatórios.',
+        severity: 'error',
+      });
+      return;
+    }
+
     setLoading(true);
 
     try {
@@ -224,6 +202,16 @@ const Schedule = () => {
     }
   };
 
+  const isFormValid = () => {
+    return (
+      formData.clientName.trim() !== '' &&
+      formData.phone.trim() !== '' &&
+      formData.service !== '' &&
+      formData.date !== '' &&
+      formData.time !== ''
+    );
+  };
+
   return (
     <Container sx={{ py: 8 }}>
       <motion.div
@@ -242,220 +230,139 @@ const Schedule = () => {
           fontStyle: 'italic',
           mb: 6,
         }}>
-          Escolha o serviço e preencha o formulário para agendar sua sessão
+          Escolha a data e preencha o formulário para agendar sua sessão
         </Typography>
       </motion.div>
 
-      <Grid container spacing={4}>
-        <Grid item xs={12} md={8}>
-          <motion.div
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.8, delay: 0.2 }}
-          >
-            <FormPaper>
-              <form onSubmit={handleSubmit}>
-                <Grid container spacing={3}>
-                  <Grid item xs={12} sm={6}>
-                    <TextField
-                      required
-                      fullWidth
-                      label="Nome"
-                      name="clientName"
-                      value={formData.clientName}
-                      onChange={handleChange}
-                      variant="outlined"
-                      disabled={!!userData}
-                    />
-                  </Grid>
-                  <Grid item xs={12} sm={6}>
-                    <TextField
-                      required
-                      fullWidth
-                      label="Telefone"
-                      name="phone"
-                      value={formData.phone}
-                      onChange={handleChange}
-                      variant="outlined"
-                      placeholder="(98) 99999-9999"
-                      disabled={!!userData}
-                    />
-                  </Grid>
-                  <Grid item xs={12}>
-                    <FormControl fullWidth required>
-                      <InputLabel>Serviço</InputLabel>
-                      <Select
-                        name="service"
-                        value={formData.service}
-                        onChange={handleChange}
-                        label="Serviço"
-                      >
-                        {services.map((service) => (
-                          <MenuItem key={service.title} value={service.title}>
-                            {service.title}
-                          </MenuItem>
-                        ))}
-                      </Select>
-                    </FormControl>
-                  </Grid>
-                  <Grid item xs={12} sm={6}>
-                    <TextField
-                      required
-                      fullWidth
-                      label="Data"
-                      name="date"
-                      type="date"
-                      value={formData.date}
-                      onChange={handleChange}
-                      InputLabelProps={{ shrink: true }}
-                      variant="outlined"
-                      inputProps={{
-                        min: new Date().toISOString().split('T')[0],
-                      }}
-                    />
-                  </Grid>
-                  <Grid item xs={12} sm={6}>
-                    <FormControl fullWidth required>
-                      <InputLabel>Horário</InputLabel>
-                      <Select
-                        name="time"
-                        value={formData.time}
-                        onChange={handleChange}
-                        label="Horário"
-                        disabled={!formData.date || availableTimes.length === 0}
-                      >
-                        {availableTimes.map((time) => (
-                          <MenuItem key={time} value={time}>
-                            {time}
-                          </MenuItem>
-                        ))}
-                      </Select>
-                    </FormControl>
-                  </Grid>
-                  <Grid item xs={12}>
-                    <TextField
-                      fullWidth
-                      label="Descrição da Tatuagem"
-                      name="description"
-                      multiline
-                      rows={4}
-                      value={formData.description}
-                      onChange={handleChange}
-                      variant="outlined"
-                      placeholder="Descreva detalhadamente a tatuagem que você deseja fazer..."
-                    />
-                  </Grid>
-                  <Grid item xs={12}>
-                    <Button
-                      type="submit"
-                      variant="contained"
-                      color="primary"
-                      size="large"
-                      fullWidth
-                      disabled={loading}
-                      sx={{ 
-                        py: 2,
-                        fontSize: '1.1rem',
-                        fontFamily: '"Playfair Display", serif',
-                        '&:hover': {
-                          transform: 'translateY(-2px)',
-                          boxShadow: '0 8px 16px rgba(255, 77, 77, 0.3)',
-                        },
-                      }}
-                    >
-                      {loading ? 'Agendando...' : 'Agendar'}
-                    </Button>
-                  </Grid>
-                </Grid>
-              </form>
-            </FormPaper>
-          </motion.div>
-        </Grid>
-
-        <Grid item xs={12} md={4}>
-          <motion.div
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.8, delay: 0.4 }}
-          >
-            <Box sx={{ mb: 4 }}>
-              <Typography variant="h5" gutterBottom sx={{ 
-                fontFamily: '"Playfair Display", serif',
-                fontWeight: 600,
-              }}>
-                Horários Disponíveis
-              </Typography>
-              <Typography variant="body2" color="text.secondary" paragraph>
-                Segunda a Sexta:
-              </Typography>
-              <Typography variant="body2" color="text.secondary" paragraph>
-                Manhã: 8:00 - 11:30
-              </Typography>
-              <Typography variant="body2" color="text.secondary" paragraph>
-                Tarde: 14:00 - 18:00
-              </Typography>
-            </Box>
-
-            <Typography variant="h5" gutterBottom sx={{ 
-              fontFamily: '"Playfair Display", serif',
-              fontWeight: 600,
-              mb: 3,
-            }}>
-              Nossos Serviços
-            </Typography>
-
-            {services.map((service, index) => (
-              <motion.div
-                key={service.title}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: 0.2 * index }}
-              >
-                <ServiceCard sx={{ mb: 3 }}>
-                  <CardMedia
-                    component="img"
-                    height="140"
-                    image={service.image}
-                    alt={service.title}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.8, delay: 0.2 }}
+      >
+        <FormPaper>
+          <form onSubmit={handleSubmit}>
+            <Grid container spacing={3}>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  required
+                  fullWidth
+                  label="Nome"
+                  name="clientName"
+                  value={formData.clientName}
+                  onChange={handleChange}
+                  variant="outlined"
+                  disabled={!!userData}
+                />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  required
+                  fullWidth
+                  label="Telefone"
+                  name="phone"
+                  value={formData.phone}
+                  onChange={handleChange}
+                  variant="outlined"
+                  placeholder="(98) 99999-9999"
+                  disabled={!!userData}
+                />
+              </Grid>
+              <Grid item xs={12}>
+                <FormControl fullWidth required>
+                  <InputLabel>Serviço</InputLabel>
+                  <Select
+                    name="service"
+                    value={formData.service}
+                    onChange={handleChange}
+                    label="Serviço"
+                  >
+                    <MenuItem value="Tatuagem Minimalista">Tatuagem Minimalista</MenuItem>
+                    <MenuItem value="Cover-up">Cover-up</MenuItem>
+                    <MenuItem value="Tatuagem Autoral">Tatuagem Autoral</MenuItem>
+                  </Select>
+                </FormControl>
+              </Grid>
+              <Grid item xs={12}>
+                <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={ptBR}>
+                  <DatePicker
+                    label="Data"
+                    value={formData.date ? new Date(formData.date) : null}
+                    onChange={handleDateChange}
+                    minDate={new Date()}
+                    sx={{ width: '100%' }}
+                    slotProps={{
+                      textField: {
+                        fullWidth: true,
+                        required: true,
+                        variant: "outlined",
+                      },
+                    }}
+                    shouldDisableDate={(date) => {
+                      const day = date.getDay();
+                      return day === 0 || day === 6; // Desabilita sábados e domingos
+                    }}
                   />
-                  <CardContent>
-                    <Typography gutterBottom variant="h6" component="h2" sx={{ 
-                      fontFamily: '"Playfair Display", serif',
-                      fontWeight: 600,
-                    }}>
-                      {service.title}
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary" paragraph>
-                      {service.description}
-                    </Typography>
-                    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                      <Typography variant="h6" color="primary" sx={{ 
-                        fontFamily: '"Playfair Display", serif',
-                        fontWeight: 600,
-                      }}>
-                        {service.price}
-                      </Typography>
-                      {service.isPromo && (
-                        <Chip
-                          label={service.promo}
-                          color="primary"
-                          size="small"
-                          sx={{ 
-                            borderRadius: 0,
-                            '& .MuiChip-label': {
-                              fontFamily: '"Playfair Display", serif',
-                            },
-                          }}
-                        />
-                      )}
-                    </Box>
-                  </CardContent>
-                </ServiceCard>
-              </motion.div>
-            ))}
-          </motion.div>
-        </Grid>
-      </Grid>
+                </LocalizationProvider>
+              </Grid>
+              <Grid item xs={12}>
+                <FormControl fullWidth required>
+                  <InputLabel>Horário</InputLabel>
+                  <Select
+                    name="time"
+                    value={formData.time}
+                    onChange={handleChange}
+                    label="Horário"
+                    disabled={!formData.date || availableTimes.length === 0}
+                  >
+                    {availableTimes.map((time) => (
+                      <MenuItem key={time} value={time}>
+                        {time}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              </Grid>
+              <Grid item xs={12}>
+                <TextField
+                  fullWidth
+                  label="Descrição da Tatuagem"
+                  name="description"
+                  multiline
+                  rows={4}
+                  value={formData.description}
+                  onChange={handleChange}
+                  variant="outlined"
+                  placeholder="Descreva detalhadamente a tatuagem que você deseja fazer..."
+                />
+              </Grid>
+              <Grid item xs={12}>
+                <Button
+                  type="submit"
+                  variant="contained"
+                  color="primary"
+                  size="large"
+                  fullWidth
+                  disabled={loading || !isFormValid()}
+                  sx={{ 
+                    py: 2,
+                    fontSize: '1.1rem',
+                    fontFamily: '"Playfair Display", serif',
+                    '&:hover': {
+                      transform: 'translateY(-2px)',
+                      boxShadow: '0 8px 16px rgba(255, 77, 77, 0.3)',
+                    },
+                    '&.Mui-disabled': {
+                      backgroundColor: 'rgba(255, 77, 77, 0.5)',
+                    },
+                  }}
+                >
+                  {loading ? 'Agendando...' : 'Agendar'}
+                </Button>
+              </Grid>
+            </Grid>
+          </form>
+        </FormPaper>
+      </motion.div>
 
       <Snackbar
         open={snackbar.open}
