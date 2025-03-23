@@ -52,7 +52,7 @@ import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as ChartTooltip, ResponsiveContainer } from 'recharts';
 import { getPromotions, createPromotion, updatePromotion, deletePromotion } from '../services/promotionService';
-import { updateAppointmentStatus } from '../services/appointmentService';
+import { getAllAppointments, getAllClients, updateAppointmentStatus } from '../services/appointmentService';
 import { Appointment } from '../services/appointmentService';
 
 const AdminPaper = styled(Paper)(({ theme }) => ({
@@ -106,6 +106,7 @@ const Admin = () => {
     pendingAppointments: 0,
     totalClients: 0,
     totalRevenue: 0,
+    totalPoints: 0,
   });
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [clients, setClients] = useState<any[]>([]);
@@ -127,21 +128,11 @@ const Admin = () => {
   const loadData = async () => {
     try {
       // Carregar agendamentos
-      const appointmentsRef = collection(db, 'appointments');
-      const appointmentsSnapshot = await getDocs(appointmentsRef);
-      const appointmentsData = appointmentsSnapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      }));
+      const appointmentsData = await getAllAppointments();
       setAppointments(appointmentsData);
 
       // Carregar clientes
-      const usersRef = collection(db, 'users');
-      const usersSnapshot = await getDocs(usersRef);
-      const clientsData = usersSnapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      }));
+      const clientsData = await getAllClients();
       setClients(clientsData);
 
       // Carregar promoções
@@ -161,6 +152,7 @@ const Admin = () => {
         totalRevenue: appointmentsData
           .filter(a => a.status === 'completed')
           .reduce((sum, a) => sum + (a.price || 0), 0),
+        totalPoints: clientsData.reduce((sum, c) => sum + (c.loyaltyPoints || 0), 0),
       });
     } catch (error) {
       console.error('Erro ao carregar dados:', error);
@@ -337,7 +329,7 @@ const Admin = () => {
                 <Typography variant="h6">Fidelidade</Typography>
               </Box>
               <Typography variant="h4">
-                {clients.reduce((sum, c) => sum + (c.loyaltyPoints || 0), 0)}
+                {stats.totalPoints}
               </Typography>
               <Typography variant="body2" color="text.secondary">
                 Total de pontos distribuídos

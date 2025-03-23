@@ -17,8 +17,6 @@ export interface Appointment {
   updatedAt?: Timestamp;
   price?: number;
   pointsEarned?: number;
-  loyaltyPoints?: number;
-  totalAppointments?: number;
 }
 
 export const getAppointments = async (userId?: string, clientId?: string): Promise<Appointment[]> => {
@@ -86,7 +84,7 @@ export const createAppointment = async (appointmentData: Omit<Appointment, 'id' 
       date: Timestamp.fromDate(appointmentData.date as unknown as Date),
       status: 'pending',
       createdAt: Timestamp.now(),
-      clientId: appointmentData.userId,
+      updatedAt: Timestamp.now(),
       pointsEarned,
       loyaltyPoints: newLoyaltyPoints,
       totalAppointments: newTotalAppointments
@@ -153,6 +151,35 @@ export const getAppointmentsByUserId = async (userId: string): Promise<Appointme
     })) as Appointment[];
   } catch (error) {
     console.error('Erro ao buscar agendamentos do usuário:', error);
+    throw error;
+  }
+};
+
+export const getAllAppointments = async (): Promise<Appointment[]> => {
+  try {
+    const appointmentsRef = collection(db, 'appointments');
+    const q = query(appointmentsRef, orderBy('date', 'desc'));
+    const querySnapshot = await getDocs(q);
+    return querySnapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    })) as Appointment[];
+  } catch (error) {
+    console.error('Erro ao buscar todos os agendamentos:', error);
+    throw error;
+  }
+};
+
+export const getAllClients = async (): Promise<any[]> => {
+  try {
+    const usersRef = collection(db, 'users');
+    const querySnapshot = await getDocs(usersRef);
+    return querySnapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    }));
+  } catch (error) {
+    console.error('Erro ao buscar todos os clientes:', error);
     throw error;
   }
 };

@@ -12,11 +12,12 @@ import {
   useScrollTrigger,
   Slide,
   useTheme,
+  Container,
 } from '@mui/material';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { getUserData, logout } from '../services/authService';
-import { AdminPanelSettings, Menu as MenuIcon } from '@mui/icons-material';
+import { AdminPanelSettings, Menu as MenuIcon, Admin } from '@mui/icons-material';
 import { styled } from '@mui/material/styles';
 
 const StyledAppBar = styled(AppBar)(({ theme }) => ({
@@ -107,222 +108,97 @@ const Navbar = () => {
   return (
     <Slide appear={false} direction="down" in={!trigger}>
       <StyledAppBar position="fixed" className={trigger ? 'scrolled' : ''}>
-        <Toolbar>
-          <Typography
-            variant="h6"
-            component="div"
-            sx={{ 
-              flexGrow: 1, 
-              cursor: 'pointer',
-              fontFamily: '"Playfair Display", serif',
-              fontWeight: 700,
-              letterSpacing: '0.1em',
-            }}
-            onClick={() => navigate('/')}
-          >
-            R7 Tattoo
-          </Typography>
-
-          <Box sx={{ display: { xs: 'none', md: 'flex' }, alignItems: 'center' }}>
-            {user ? (
-              <>
-                {isAdmin && (
-                  <IconButton
-                    color="inherit"
-                    onClick={() => navigate('/admin')}
-                    title="Painel Admin"
-                    sx={{ 
-                      '&:hover': {
-                        color: theme.palette.primary.main,
-                      },
-                    }}
-                  >
-                    <AdminPanelSettings />
-                  </IconButton>
-                )}
-                <IconButton 
-                  onClick={handleMenu} 
-                  color="inherit"
-                  sx={{ 
-                    '&:hover': {
-                      color: theme.palette.primary.main,
-                    },
-                  }}
-                >
-                  <Avatar 
-                    sx={{ 
-                      width: 32, 
-                      height: 32, 
-                      bgcolor: 'primary.main',
-                      fontFamily: '"Playfair Display", serif',
-                    }}
-                  >
-                    {user.displayName?.charAt(0) || user.email?.charAt(0)}
-                  </Avatar>
-                </IconButton>
-                <Menu
-                  anchorEl={anchorEl}
-                  open={Boolean(anchorEl)}
-                  onClose={handleClose}
-                  PaperProps={{
-                    sx: {
-                      mt: 1.5,
-                      backgroundColor: 'background.paper',
-                      border: '1px solid rgba(255,255,255,0.1)',
-                      borderRadius: 0,
-                    },
-                  }}
-                >
-                  <MenuItem 
-                    onClick={() => { handleClose(); navigate('/profile'); }}
-                    sx={{ 
-                      fontFamily: '"Playfair Display", serif',
-                      '&:hover': {
-                        backgroundColor: 'rgba(255,77,77,0.1)',
-                      },
-                    }}
-                  >
-                    Meu Perfil
-                  </MenuItem>
-                  <MenuItem 
-                    onClick={() => { handleClose(); navigate('/schedule'); }}
-                    sx={{ 
-                      fontFamily: '"Playfair Display", serif',
-                      '&:hover': {
-                        backgroundColor: 'rgba(255,77,77,0.1)',
-                      },
-                    }}
-                  >
-                    Agendar
-                  </MenuItem>
-                  <MenuItem 
-                    onClick={handleLogout}
-                    sx={{ 
-                      fontFamily: '"Playfair Display", serif',
-                      '&:hover': {
-                        backgroundColor: 'rgba(255,77,77,0.1)',
-                      },
-                    }}
-                  >
-                    Sair
-                  </MenuItem>
-                </Menu>
-              </>
-            ) : (
-              <>
-                <NavButton onClick={() => navigate('/login')}>
-                  Login
-                </NavButton>
-                <NavButton onClick={() => navigate('/register')}>
-                  Cadastrar
-                </NavButton>
-              </>
-            )}
-          </Box>
-
-          <Box sx={{ display: { xs: 'flex', md: 'none' } }}>
-            <IconButton
-              color="inherit"
-              onClick={handleMobileMenu}
-              sx={{ 
-                '&:hover': {
-                  color: theme.palette.primary.main,
-                },
+        <Container maxWidth="xl">
+          <Toolbar disableGutters>
+            <Typography
+              variant="h6"
+              noWrap
+              component={Link}
+              to="/"
+              sx={{
+                mr: 2,
+                display: { xs: 'none', md: 'flex' },
+                fontFamily: '"Playfair Display", serif',
+                fontWeight: 700,
+                color: 'inherit',
+                textDecoration: 'none',
               }}
             >
-              <MenuIcon />
-            </IconButton>
-            <Menu
-              anchorEl={mobileMenuAnchor}
-              open={Boolean(mobileMenuAnchor)}
-              onClose={handleMobileMenuClose}
-              PaperProps={{
-                sx: {
-                  mt: 1.5,
-                  backgroundColor: 'background.paper',
-                  border: '1px solid rgba(255,255,255,0.1)',
-                  borderRadius: 0,
-                },
-              }}
-            >
+              RC Tatoo
+            </Typography>
+
+            <Box sx={{ flexGrow: 1, display: { xs: 'none', md: 'flex' } }}>
+              <Button
+                component={Link}
+                to="/"
+                sx={{ my: 2, color: 'white', display: 'block' }}
+              >
+                Início
+              </Button>
+              <Button
+                component={Link}
+                to="/schedule"
+                sx={{ my: 2, color: 'white', display: 'block' }}
+              >
+                Agendar
+              </Button>
+              <Button
+                component={Link}
+                to="/gallery"
+                sx={{ my: 2, color: 'white', display: 'block' }}
+              >
+                Galeria
+              </Button>
+              <Button
+                component={Link}
+                to="/contact"
+                sx={{ my: 2, color: 'white', display: 'block' }}
+              >
+                Contato
+              </Button>
+            </Box>
+
+            <Box sx={{ flexGrow: 0 }}>
               {user ? (
                 <>
-                  {isAdmin && (
-                    <MenuItem 
-                      onClick={() => { handleMobileMenuClose(); navigate('/admin'); }}
-                      sx={{ 
-                        fontFamily: '"Playfair Display", serif',
-                        '&:hover': {
-                          backgroundColor: 'rgba(255,77,77,0.1)',
-                        },
-                      }}
+                  {user.email === 'admin@rctatoo.com' && (
+                    <Button
+                      component={Link}
+                      to="/admin"
+                      startIcon={<Admin />}
+                      sx={{ mr: 2, color: 'white' }}
                     >
                       Painel Admin
-                    </MenuItem>
+                    </Button>
                   )}
-                  <MenuItem 
-                    onClick={() => { handleMobileMenuClose(); navigate('/profile'); }}
-                    sx={{ 
-                      fontFamily: '"Playfair Display", serif',
-                      '&:hover': {
-                        backgroundColor: 'rgba(255,77,77,0.1)',
-                      },
-                    }}
+                  <IconButton
+                    component={Link}
+                    to="/profile"
+                    sx={{ p: 0 }}
                   >
-                    Meu Perfil
-                  </MenuItem>
-                  <MenuItem 
-                    onClick={() => { handleMobileMenuClose(); navigate('/schedule'); }}
-                    sx={{ 
-                      fontFamily: '"Playfair Display", serif',
-                      '&:hover': {
-                        backgroundColor: 'rgba(255,77,77,0.1)',
-                      },
-                    }}
-                  >
-                    Agendar
-                  </MenuItem>
-                  <MenuItem 
-                    onClick={handleLogout}
-                    sx={{ 
-                      fontFamily: '"Playfair Display", serif',
-                      '&:hover': {
-                        backgroundColor: 'rgba(255,77,77,0.1)',
-                      },
-                    }}
-                  >
-                    Sair
-                  </MenuItem>
+                    <Avatar
+                      sx={{
+                        width: 35,
+                        height: 35,
+                        bgcolor: '#FF4D4D',
+                      }}
+                    >
+                      {user.email?.[0]?.toUpperCase()}
+                    </Avatar>
+                  </IconButton>
                 </>
               ) : (
-                <>
-                  <MenuItem 
-                    onClick={() => { handleMobileMenuClose(); navigate('/login'); }}
-                    sx={{ 
-                      fontFamily: '"Playfair Display", serif',
-                      '&:hover': {
-                        backgroundColor: 'rgba(255,77,77,0.1)',
-                      },
-                    }}
-                  >
-                    Login
-                  </MenuItem>
-                  <MenuItem 
-                    onClick={() => { handleMobileMenuClose(); navigate('/register'); }}
-                    sx={{ 
-                      fontFamily: '"Playfair Display", serif',
-                      '&:hover': {
-                        backgroundColor: 'rgba(255,77,77,0.1)',
-                      },
-                    }}
-                  >
-                    Cadastrar
-                  </MenuItem>
-                </>
+                <Button
+                  component={Link}
+                  to="/login"
+                  sx={{ color: 'white' }}
+                >
+                  Login
+                </Button>
               )}
-            </Menu>
-          </Box>
-        </Toolbar>
+            </Box>
+          </Toolbar>
+        </Container>
       </StyledAppBar>
     </Slide>
   );
