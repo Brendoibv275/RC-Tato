@@ -1,6 +1,6 @@
 import React, { Suspense, useEffect, useState } from 'react';
 import { BrowserRouter as Router, Routes, Route, useLocation, Navigate } from 'react-router-dom';
-import { ThemeProvider, CssBaseline, Box } from '@mui/material';
+import { ThemeProvider, CssBaseline, Box, Typography, Button } from '@mui/material';
 import { AuthProvider } from './contexts/AuthContext';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
@@ -50,6 +50,39 @@ const PageContainer = ({ children }: { children: React.ReactNode }) => {
 
   return <>{children}</>;
 };
+
+// Componente para página não encontrada
+const NotFound = () => (
+  <Box
+    sx={{
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+      justifyContent: 'center',
+      minHeight: '60vh',
+      textAlign: 'center',
+      px: 2,
+    }}
+  >
+    <Typography variant="h1" component="h1" gutterBottom>
+      404
+    </Typography>
+    <Typography variant="h5" gutterBottom>
+      Página não encontrada
+    </Typography>
+    <Typography variant="body1" color="text.secondary" paragraph>
+      A página que você está procurando não existe ou foi movida.
+    </Typography>
+    <Button
+      variant="contained"
+      color="primary"
+      onClick={() => window.location.href = '/'}
+      sx={{ mt: 2 }}
+    >
+      Voltar para a página inicial
+    </Button>
+  </Box>
+);
 
 function App() {
   return (
@@ -120,6 +153,7 @@ function App() {
                       </PrivateRoute>
                     }
                   />
+                  <Route path="*" element={<NotFound />} />
                 </Routes>
               </Suspense>
             </Box>
