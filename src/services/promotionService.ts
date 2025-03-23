@@ -1,16 +1,22 @@
-import { db, collections, Promotion } from '../config/firebase';
-import { collection, getDocs, doc, updateDoc, addDoc, deleteDoc, Timestamp } from 'firebase/firestore';
+import { collection, getDocs, doc, updateDoc, addDoc, deleteDoc } from 'firebase/firestore';
+import { db } from '../config/firebase';
+
+export interface Promotion {
+  id?: string;
+  title: string;
+  description: string;
+  price: number;
+  validUntil: string;
+  isActive: boolean;
+}
 
 export const getPromotions = async (): Promise<Promotion[]> => {
   try {
-    const promotionsRef = collection(db, collections.promotions);
-    const snapshot = await getDocs(promotionsRef);
-    return snapshot.docs.map(doc => ({
+    const promotionsRef = collection(db, 'promotions');
+    const promotionsSnapshot = await getDocs(promotionsRef);
+    return promotionsSnapshot.docs.map(doc => ({
       id: doc.id,
-      ...doc.data(),
-      validUntil: doc.data().validUntil.toDate(),
-      createdAt: doc.data().createdAt?.toDate(),
-      updatedAt: doc.data().updatedAt?.toDate(),
+      ...doc.data()
     })) as Promotion[];
   } catch (error) {
     console.error('Erro ao buscar promoções:', error);
@@ -20,14 +26,7 @@ export const getPromotions = async (): Promise<Promotion[]> => {
 
 export const createPromotion = async (promotion: Omit<Promotion, 'id'>): Promise<string> => {
   try {
-    const promotionsRef = collection(db, collections.promotions);
-    const promotionToSave = {
-      ...promotion,
-      validUntil: Timestamp.fromDate(promotion.validUntil),
-      createdAt: Timestamp.now(),
-      updatedAt: Timestamp.now(),
-    };
-    const docRef = await addDoc(promotionsRef, promotionToSave);
+    const docRef = await addDoc(collection(db, 'promotions'), promotion);
     return docRef.id;
   } catch (error) {
     console.error('Erro ao criar promoção:', error);
@@ -35,24 +34,19 @@ export const createPromotion = async (promotion: Omit<Promotion, 'id'>): Promise
   }
 };
 
-export const updatePromotion = async (id: string, promotion: Partial<Promotion>): Promise<void> => {
+export const updatePromotion = async (promotionId: string, promotion: Partial<Promotion>): Promise<void> => {
   try {
-    const promotionRef = doc(db, collections.promotions, id);
-    const promotionToUpdate = {
-      ...promotion,
-      validUntil: promotion.validUntil ? Timestamp.fromDate(promotion.validUntil) : undefined,
-      updatedAt: Timestamp.now(),
-    };
-    await updateDoc(promotionRef, promotionToUpdate);
+    const promotionRef = doc(db, 'promotions', promotionId);
+    await updateDoc(promotionRef, promotion);
   } catch (error) {
     console.error('Erro ao atualizar promoção:', error);
     throw error;
   }
 };
 
-export const deletePromotion = async (id: string): Promise<void> => {
+export const deletePromotion = async (promotionId: string): Promise<void> => {
   try {
-    const promotionRef = doc(db, collections.promotions, id);
+    const promotionRef = doc(db, 'promotions', promotionId);
     await deleteDoc(promotionRef);
   } catch (error) {
     console.error('Erro ao excluir promoção:', error);

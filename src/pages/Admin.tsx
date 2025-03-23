@@ -143,12 +143,7 @@ const Admin = () => {
       setClients(clientsData);
 
       // Carregar promoções
-      const promotionsRef = collection(db, 'promotions');
-      const promotionsSnapshot = await getDocs(promotionsRef);
-      const promotionsData = promotionsSnapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      }));
+      const promotionsData = await getPromotions();
       setPromotions(promotionsData);
 
       // Carregar dados do perfil

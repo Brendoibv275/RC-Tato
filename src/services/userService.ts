@@ -4,7 +4,7 @@ import { db } from '../config/firebase';
 export interface UserData {
   name: string;
   email: string;
-  phone: string;
+  phone?: string;
   isAdmin?: boolean;
   loyaltyPoints?: number;
   totalAppointments?: number;
@@ -26,10 +26,7 @@ export const getUserData = async (userId: string): Promise<UserData | null> => {
 export const updateUserData = async (userId: string, data: Partial<UserData>): Promise<void> => {
   try {
     const userRef = doc(db, 'users', userId);
-    await updateDoc(userRef, {
-      ...data,
-      updatedAt: new Date(),
-    });
+    await updateDoc(userRef, data);
   } catch (error) {
     console.error('Erro ao atualizar dados do usuário:', error);
     throw error;

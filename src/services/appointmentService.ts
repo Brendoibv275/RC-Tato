@@ -107,28 +107,10 @@ export const createAppointment = async (appointmentData: Omit<Appointment, 'id' 
   }
 };
 
-export const updateAppointmentStatus = async (appointmentId: string, newStatus: Appointment['status']): Promise<void> => {
+export const updateAppointmentStatus = async (appointmentId: string, status: Appointment['status']): Promise<void> => {
   try {
     const appointmentRef = doc(db, 'appointments', appointmentId);
-    const appointmentDoc = await getDoc(appointmentRef);
-    const appointmentData = appointmentDoc.data() as Appointment;
-
-    await updateDoc(appointmentRef, {
-      status: newStatus,
-      updatedAt: Timestamp.now()
-    });
-
-    // Se o status mudar para 'completed', atribuir os pontos de fidelidade
-    if (newStatus === 'completed' && appointmentData.pointsEarned) {
-      const userRef = doc(db, 'users', appointmentData.userId);
-      const userDoc = await getDoc(userRef);
-      const userData = userDoc.data();
-
-      // Atualizar pontos de fidelidade do usuário
-      await updateDoc(userRef, {
-        loyaltyPoints: (userData?.loyaltyPoints || 0) + appointmentData.pointsEarned
-      });
-    }
+    await updateDoc(appointmentRef, { status });
   } catch (error) {
     console.error('Erro ao atualizar status do agendamento:', error);
     throw error;
@@ -138,14 +120,9 @@ export const updateAppointmentStatus = async (appointmentId: string, newStatus: 
 export const getAppointmentsByUserId = async (userId: string): Promise<Appointment[]> => {
   try {
     const appointmentsRef = collection(db, 'appointments');
-    const q = query(
-      appointmentsRef,
-      where('userId', '==', userId),
-      orderBy('date', 'desc')
-    );
-    
-    const querySnapshot = await getDocs(q);
-    return querySnapshot.docs.map(doc => ({
+    const q = query(appointmentsRef, where('clientId', '==', userId));
+    const appointmentsSnapshot = await getDocs(q);
+    return appointmentsSnapshot.docs.map(doc => ({
       id: doc.id,
       ...doc.data()
     })) as Appointment[];
@@ -158,28 +135,27 @@ export const getAppointmentsByUserId = async (userId: string): Promise<Appointme
 export const getAllAppointments = async (): Promise<Appointment[]> => {
   try {
     const appointmentsRef = collection(db, 'appointments');
-    const q = query(appointmentsRef, orderBy('date', 'desc'));
-    const querySnapshot = await getDocs(q);
-    return querySnapshot.docs.map(doc => ({
+    const appointmentsSnapshot = await getDocs(appointmentsRef);
+    return appointmentsSnapshot.docs.map(doc => ({
       id: doc.id,
       ...doc.data()
     })) as Appointment[];
   } catch (error) {
-    console.error('Erro ao buscar todos os agendamentos:', error);
+    console.error('Erro ao buscar agendamentos:', error);
     throw error;
   }
 };
 
-export const getAllClients = async (): Promise<any[]> => {
+export const getAllClients = async () => {
   try {
     const usersRef = collection(db, 'users');
-    const querySnapshot = await getDocs(usersRef);
-    return querySnapshot.docs.map(doc => ({
+    const usersSnapshot = await getDocs(usersRef);
+    return usersSnapshot.docs.map(doc => ({
       id: doc.id,
       ...doc.data()
     }));
   } catch (error) {
-    console.error('Erro ao buscar todos os clientes:', error);
+    console.error('Erro ao buscar clientes:', error);
     throw error;
   }
 };
