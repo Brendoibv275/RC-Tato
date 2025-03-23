@@ -1,5 +1,5 @@
 import { db } from '../config/firebase';
-import { collection, getDocs, doc, updateDoc, addDoc, Timestamp, query, where, orderBy, getDoc } from 'firebase/firestore';
+import { collection, getDocs, doc, updateDoc, addDoc, Timestamp, query, where, orderBy, getDoc, deleteDoc } from 'firebase/firestore';
 
 export interface Appointment {
   id?: string;
@@ -64,7 +64,7 @@ export const getAppointments = async (userId?: string, clientId?: string): Promi
   }
 };
 
-export const createAppointment = async (appointmentData: Omit<Appointment, 'id'>): Promise<string> => {
+export const createAppointment = async (appointmentData: Omit<Appointment, 'id' | 'createdAt' | 'updatedAt'>): Promise<string> => {
   try {
     console.log('Criando agendamento com dados:', appointmentData);
 
@@ -133,6 +133,35 @@ export const updateAppointmentStatus = async (appointmentId: string, newStatus: 
     }
   } catch (error) {
     console.error('Erro ao atualizar status do agendamento:', error);
+    throw error;
+  }
+};
+
+export const getAppointmentsByUserId = async (userId: string): Promise<Appointment[]> => {
+  try {
+    const appointmentsRef = collection(db, 'appointments');
+    const q = query(
+      appointmentsRef,
+      where('userId', '==', userId),
+      orderBy('date', 'desc')
+    );
+    
+    const querySnapshot = await getDocs(q);
+    return querySnapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    })) as Appointment[];
+  } catch (error) {
+    console.error('Erro ao buscar agendamentos do usuário:', error);
+    throw error;
+  }
+};
+
+export const deleteAppointment = async (appointmentId: string): Promise<void> => {
+  try {
+    await deleteDoc(doc(db, 'appointments', appointmentId));
+  } catch (error) {
+    console.error('Erro ao deletar agendamento:', error);
     throw error;
   }
 };
