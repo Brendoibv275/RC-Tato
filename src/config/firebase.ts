@@ -4,12 +4,12 @@ import { getAuth } from 'firebase/auth';
 import { getStorage } from 'firebase/storage';
 
 const firebaseConfig = {
-  apiKey: "AIzaSyDd0qBOH6OkoBkh2sDBSOHAVcK_rmL4RZ8",
-  authDomain: "r7-tatoo.firebaseapp.com",
-  projectId: "r7-tatoo",
-  storageBucket: "r7-tatoo.firebasestorage.app",
-  messagingSenderId: "206875680719",
-  appId: "1:206875680719:web:65275f3754969e11517cba"
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+  appId: import.meta.env.VITE_FIREBASE_APP_ID
 };
 
 // Initialize Firebase
@@ -33,12 +33,12 @@ export const collections = {
 
 // Tipos de dados
 export interface Promotion {
-  id?: string;
+  id: string;
   title: string;
   description: string;
   price: number;
   validUntil: Date;
   isActive: boolean;
-  createdAt?: Date;
-  updatedAt?: Date;
+  createdAt: Date;
+  updatedAt: Date;
 } 
