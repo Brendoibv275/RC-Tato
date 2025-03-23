@@ -18,7 +18,7 @@ import {
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { getUserData, logout } from '../services/authService';
-import { AdminPanelSettings, Menu as MenuIcon } from '@mui/icons-material';
+import { AdminPanelSettings, Menu as MenuIcon, Logout } from '@mui/icons-material';
 import { styled } from '@mui/material/styles';
 
 const StyledAppBar = styled(AppBar)(({ theme }) => ({
@@ -60,7 +60,6 @@ const Navbar = () => {
   const { user } = useAuth();
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [isAdmin, setIsAdmin] = useState(false);
-  const [mobileMenuAnchor, setMobileMenuAnchor] = useState<null | HTMLElement>(null);
   const theme = useTheme();
   const trigger = useScrollTrigger({
     threshold: 100,
@@ -87,14 +86,6 @@ const Navbar = () => {
 
   const handleClose = () => {
     setAnchorEl(null);
-  };
-
-  const handleMobileMenu = (event: React.MouseEvent<HTMLElement>) => {
-    setMobileMenuAnchor(event.currentTarget);
-  };
-
-  const handleMobileMenuClose = () => {
-    setMobileMenuAnchor(null);
   };
 
   const handleLogout = async () => {
@@ -143,26 +134,12 @@ const Navbar = () => {
               >
                 Agendar
               </Button>
-              <Button
-                component={Link}
-                to="/gallery"
-                sx={{ my: 2, color: 'white', display: 'block' }}
-              >
-                Galeria
-              </Button>
-              <Button
-                component={Link}
-                to="/contact"
-                sx={{ my: 2, color: 'white', display: 'block' }}
-              >
-                Contato
-              </Button>
             </Box>
 
             <Box sx={{ flexGrow: 0 }}>
               {user ? (
                 <>
-                  {user.email === 'admin@rctatoo.com' && (
+                  {isAdmin && (
                     <Button
                       component={Link}
                       to="/admin"
@@ -173,8 +150,7 @@ const Navbar = () => {
                     </Button>
                   )}
                   <IconButton
-                    component={Link}
-                    to="/profile"
+                    onClick={handleMenu}
                     sx={{ p: 0 }}
                   >
                     <Avatar
@@ -187,6 +163,30 @@ const Navbar = () => {
                       {user.email?.[0]?.toUpperCase()}
                     </Avatar>
                   </IconButton>
+                  <Menu
+                    anchorEl={anchorEl}
+                    open={Boolean(anchorEl)}
+                    onClose={handleClose}
+                    PaperProps={{
+                      sx: {
+                        backgroundColor: '#1e1e1e',
+                        color: 'white',
+                        '& .MuiMenuItem-root': {
+                          '&:hover': {
+                            backgroundColor: 'rgba(255,255,255,0.1)',
+                          },
+                        },
+                      },
+                    }}
+                  >
+                    <MenuItem component={Link} to="/profile" onClick={handleClose}>
+                      Meu Perfil
+                    </MenuItem>
+                    <MenuItem onClick={handleLogout}>
+                      <Logout sx={{ mr: 1 }} />
+                      Sair
+                    </MenuItem>
+                  </Menu>
                 </>
               ) : (
                 <Button

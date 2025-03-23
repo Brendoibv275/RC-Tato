@@ -39,6 +39,7 @@ import {
   Edit as EditIcon,
   EmojiEvents as EmojiEventsIcon,
   TrendingUp as TrendingUpIcon,
+  AdminPanelSettings,
 } from '@mui/icons-material';
 import { useAuth } from '../contexts/AuthContext';
 import { getUserData, updateUserData } from '../services/authService';
@@ -46,6 +47,7 @@ import { getAppointmentsByUserId } from '../services/appointmentService';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { motion } from 'framer-motion';
+import { useNavigate } from 'react-router-dom';
 
 const Profile = () => {
   const { user } = useAuth();
@@ -63,6 +65,7 @@ const Profile = () => {
     severity: 'success' as 'success' | 'error',
   });
   const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const loadData = async () => {
@@ -231,6 +234,18 @@ const Profile = () => {
               <Typography variant="body2" color="text.secondary">
                 {userData?.phone || 'Telefone não cadastrado'}
               </Typography>
+
+              {userData?.isAdmin && (
+                <Button
+                  variant="contained"
+                  color="primary"
+                  startIcon={<AdminPanelSettings />}
+                  onClick={() => navigate('/admin')}
+                  sx={{ mt: 2, width: '100%' }}
+                >
+                  Acessar Painel Admin
+                </Button>
+              )}
 
               {/* Seção de Gamificação */}
               <Box sx={{ width: '100%', mt: 4 }}>
