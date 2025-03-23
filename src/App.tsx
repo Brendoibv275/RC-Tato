@@ -17,7 +17,7 @@ const Profile = React.lazy(() => import('./pages/Profile'));
 const Admin = React.lazy(() => import('./pages/Admin'));
 
 // Componente para proteger rotas
-const PrivateRoute = ({ children }: { children: React.ReactNode }) => {
+const PrivateRoute = ({ children, adminOnly = false }: { children: React.ReactNode; adminOnly?: boolean }) => {
   const { user, loading } = useAuth();
   const location = useLocation();
 
@@ -27,6 +27,10 @@ const PrivateRoute = ({ children }: { children: React.ReactNode }) => {
 
   if (!user) {
     return <Navigate to="/login" state={{ from: location }} replace />;
+  }
+
+  if (adminOnly && !user.isAdmin) {
+    return <Navigate to="/profile" replace />;
   }
 
   return <>{children}</>;
@@ -146,7 +150,7 @@ function App() {
                   <Route
                     path="/admin"
                     element={
-                      <PrivateRoute>
+                      <PrivateRoute adminOnly>
                         <PageContainer>
                           <Admin />
                         </PageContainer>

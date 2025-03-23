@@ -54,6 +54,7 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as ChartTooltip, 
 import { getPromotions, createPromotion, updatePromotion, deletePromotion } from '../services/promotionService';
 import { getAllAppointments, getAllClients, updateAppointmentStatus } from '../services/appointmentService';
 import { Appointment } from '../services/appointmentService';
+import { getUserData, updateUserData } from '../services/userService';
 
 const AdminPaper = styled(Paper)(({ theme }) => ({
   padding: theme.spacing(3),
@@ -115,6 +116,12 @@ const Admin = () => {
   const [selectedPromotion, setSelectedPromotion] = useState<any>(null);
   const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null);
   const [detailsDialogOpen, setDetailsDialogOpen] = useState(false);
+  const [profileDialogOpen, setProfileDialogOpen] = useState(false);
+  const [profileData, setProfileData] = useState({
+    name: '',
+    email: '',
+    phone: '',
+  });
   const [snackbar, setSnackbar] = useState({
     open: false,
     message: '',
@@ -143,6 +150,18 @@ const Admin = () => {
         ...doc.data()
       }));
       setPromotions(promotionsData);
+
+      // Carregar dados do perfil
+      if (user) {
+        const userData = await getUserData(user.uid);
+        if (userData) {
+          setProfileData({
+            name: userData.name || '',
+            email: userData.email || '',
+            phone: userData.phone || '',
+          });
+        }
+      }
 
       // Calcular estatísticas
       setStats({
@@ -248,6 +267,31 @@ const Admin = () => {
     setDetailsDialogOpen(true);
   };
 
+  const handleProfileUpdate = async () => {
+    try {
+      if (user) {
+        await updateUserData(user.uid, {
+          name: profileData.name,
+          phone: profileData.phone,
+        });
+        setSnackbar({
+          open: true,
+          message: 'Perfil atualizado com sucesso!',
+          severity: 'success',
+        });
+        setProfileDialogOpen(false);
+        loadData();
+      }
+    } catch (error) {
+      console.error('Erro ao atualizar perfil:', error);
+      setSnackbar({
+        open: true,
+        message: 'Erro ao atualizar perfil',
+        severity: 'error',
+      });
+    }
+  };
+
   if (loading) {
     return (
       <Container sx={{ py: 8 }}>
@@ -272,9 +316,19 @@ const Admin = () => {
 
   return (
     <Container sx={{ py: 8 }}>
-      <Typography variant="h3" component="h1" gutterBottom align="center">
-        Painel Administrativo
-      </Typography>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
+        <Typography variant="h3" component="h1">
+          Painel Administrativo
+        </Typography>
+        <Button
+          variant="outlined"
+          color="primary"
+          startIcon={<Edit />}
+          onClick={() => setProfileDialogOpen(true)}
+        >
+          Editar Perfil
+        </Button>
+      </Box>
 
       <Grid container spacing={3} sx={{ mb: 4 }}>
         <Grid item xs={12} sm={6} md={3}>
@@ -778,6 +832,53 @@ const Admin = () => {
             onClick={() => window.open(`https://wa.me/55${selectedAppointment?.phone.replace(/\D/g, '')}`, '_blank')}
           >
             Enviar WhatsApp
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog
+        open={profileDialogOpen}
+        onClose={() => setProfileDialogOpen(false)}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle>Editar Perfil do Administrador</DialogTitle>
+        <DialogContent>
+          <Grid container spacing={2} sx={{ mt: 1 }}>
+            <Grid item xs={12}>
+              <TextField
+                fullWidth
+                label="Nome"
+                value={profileData.name}
+                onChange={(e) => setProfileData(prev => ({ ...prev, name: e.target.value }))}
+                variant="outlined"
+              />
+            </Grid>
+            <Grid item xs={12}>
+              <TextField
+                fullWidth
+                label="Email"
+                value={profileData.email}
+                disabled
+                variant="outlined"
+              />
+            </Grid>
+            <Grid item xs={12}>
+              <TextField
+                fullWidth
+                label="Telefone"
+                value={profileData.phone}
+                onChange={(e) => setProfileData(prev => ({ ...prev, phone: e.target.value }))}
+                variant="outlined"
+                placeholder="(98) 99999-9999"
+              />
+            </Grid>
+          </Grid>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setProfileDialogOpen(false)}>Cancelar</Button>
+          <Button onClick={handleProfileUpdate} variant="contained">
+            Salvar Alterações
           </Button>
         </DialogActions>
       </Dialog>

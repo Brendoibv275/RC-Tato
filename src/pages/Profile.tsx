@@ -22,6 +22,10 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
+  Card,
+  CardContent,
+  IconButton,
+  Tooltip,
 } from '@mui/material';
 import {
   Email as EmailIcon,
@@ -32,6 +36,9 @@ import {
   Description as DescriptionIcon,
   Star as StarIcon,
   History as HistoryIcon,
+  Edit as EditIcon,
+  EmojiEvents as EmojiEventsIcon,
+  TrendingUp as TrendingUpIcon,
 } from '@mui/icons-material';
 import { useAuth } from '../contexts/AuthContext';
 import { getUserData, updateUserData } from '../services/authService';
@@ -108,6 +115,7 @@ const Profile = () => {
           message: 'Perfil atualizado com sucesso!',
           severity: 'success',
         });
+        setEditDialogOpen(false);
       }
     } catch (error) {
       console.error('Erro ao atualizar perfil:', error);
@@ -125,6 +133,23 @@ const Profile = () => {
     return Math.min((points / 1000) * 100, 100);
   };
 
+  const getNextLevel = (points: number) => {
+    const levels = [
+      { points: 0, name: 'Iniciante' },
+      { points: 200, name: 'Bronze' },
+      { points: 500, name: 'Prata' },
+      { points: 800, name: 'Ouro' },
+      { points: 1000, name: 'Diamante' },
+    ];
+    
+    for (let i = levels.length - 1; i >= 0; i--) {
+      if (points >= levels[i].points) {
+        return levels[i];
+      }
+    }
+    return levels[0];
+  };
+
   if (loading) {
     return (
       <Box
@@ -140,6 +165,9 @@ const Profile = () => {
     );
   }
 
+  const pendingAppointments = appointments.filter(a => a.status === 'pending' || a.status === 'confirmed');
+  const currentLevel = getNextLevel(userData?.loyaltyPoints || 0);
+
   return (
     <Container sx={{ py: 8 }}>
       <motion.div
@@ -148,6 +176,7 @@ const Profile = () => {
         transition={{ duration: 0.8 }}
       >
         <Grid container spacing={4}>
+          {/* Seção de Perfil e Gamificação */}
           <Grid item xs={12} md={4}>
             <Paper
               sx={{
@@ -160,17 +189,36 @@ const Profile = () => {
                 boxShadow: '0 8px 32px rgba(0,0,0,0.3)',
               }}
             >
-              <Avatar
-                sx={{
-                  width: 120,
-                  height: 120,
-                  bgcolor: '#FF4D4D',
-                  fontSize: '3rem',
-                  mb: 2,
-                }}
-              >
-                {userData?.name?.[0]?.toUpperCase() || '?'}
-              </Avatar>
+              <Box sx={{ position: 'relative', width: '100%', display: 'flex', justifyContent: 'center' }}>
+                <Avatar
+                  sx={{
+                    width: 120,
+                    height: 120,
+                    bgcolor: '#FF4D4D',
+                    fontSize: '3rem',
+                    mb: 2,
+                  }}
+                >
+                  {userData?.name?.[0]?.toUpperCase() || '?'}
+                </Avatar>
+                <Tooltip title="Editar Perfil">
+                  <IconButton
+                    onClick={() => setEditDialogOpen(true)}
+                    sx={{
+                      position: 'absolute',
+                      bottom: 0,
+                      right: '25%',
+                      backgroundColor: '#FF4D4D',
+                      '&:hover': {
+                        backgroundColor: '#FF6B6B',
+                      },
+                    }}
+                  >
+                    <EditIcon />
+                  </IconButton>
+                </Tooltip>
+              </Box>
+              
               <Typography variant="h5" gutterBottom sx={{ 
                 fontFamily: '"Playfair Display", serif',
                 fontWeight: 600,
@@ -184,14 +232,20 @@ const Profile = () => {
                 {userData?.phone || 'Telefone não cadastrado'}
               </Typography>
 
-              <Box sx={{ width: '100%', mt: 3 }}>
-                <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                  <StarIcon color="primary" sx={{ mr: 1 }} />
-                  <Typography variant="subtitle1">
-                    Pontos de Fidelidade
+              {/* Seção de Gamificação */}
+              <Box sx={{ width: '100%', mt: 4 }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                  <EmojiEventsIcon color="primary" sx={{ mr: 1 }} />
+                  <Typography variant="h6" sx={{ 
+                    fontFamily: '"Playfair Display", serif',
+                    fontWeight: 600,
+                  }}>
+                    Nível {currentLevel.name}
                   </Typography>
                 </Box>
+                
                 <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                  <StarIcon color="primary" sx={{ mr: 1 }} />
                   <Typography variant="h4" color="primary" sx={{ mr: 1 }}>
                     {userData?.loyaltyPoints || 0}
                   </Typography>
@@ -199,6 +253,7 @@ const Profile = () => {
                     / 1000 pontos
                   </Typography>
                 </Box>
+                
                 <LinearProgress 
                   variant="determinate" 
                   value={calculateProgress(userData?.loyaltyPoints || 0)}
@@ -211,22 +266,18 @@ const Profile = () => {
                     }
                   }}
                 />
-                <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
-                  {calculateProgress(userData?.loyaltyPoints || 0).toFixed(1)}% para desconto de 10%
-                </Typography>
+                
+                <Box sx={{ display: 'flex', alignItems: 'center', mt: 2 }}>
+                  <TrendingUpIcon color="primary" sx={{ mr: 1 }} />
+                  <Typography variant="body2" color="text.secondary">
+                    Próximo nível: {1000 - (userData?.loyaltyPoints || 0)} pontos
+                  </Typography>
+                </Box>
               </Box>
-
-              <Button
-                variant="outlined"
-                color="primary"
-                onClick={() => setEditDialogOpen(true)}
-                sx={{ mt: 3 }}
-              >
-                Editar Dados
-              </Button>
             </Paper>
           </Grid>
 
+          {/* Seção de Agendamentos */}
           <Grid item xs={12} md={8}>
             <Paper
               sx={{
@@ -245,77 +296,131 @@ const Profile = () => {
                   Meus Agendamentos
                 </Typography>
               </Box>
+
+              {pendingAppointments.length > 0 && (
+                <Card sx={{ mb: 3, backgroundColor: 'rgba(255,77,77,0.1)' }}>
+                  <CardContent>
+                    <Typography variant="h6" gutterBottom sx={{ 
+                      fontFamily: '"Playfair Display", serif',
+                      fontWeight: 600,
+                    }}>
+                      Próximos Agendamentos
+                    </Typography>
+                    <List>
+                      {pendingAppointments.map((appointment) => (
+                        <React.Fragment key={appointment.id}>
+                          <ListItem>
+                            <ListItemIcon>
+                              <CalendarIcon color="primary" />
+                            </ListItemIcon>
+                            <ListItemText
+                              primary={format(new Date(appointment.date.toDate()), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
+                              secondary={
+                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.5 }}>
+                                  <TimeIcon sx={{ fontSize: '1rem' }} />
+                                  <Typography variant="body2">
+                                    {format(new Date(appointment.date.toDate()), 'HH:mm')}
+                                  </Typography>
+                                </Box>
+                              }
+                            />
+                          </ListItem>
+                          <ListItem>
+                            <ListItemIcon>
+                              <DescriptionIcon color="primary" />
+                            </ListItemIcon>
+                            <ListItemText
+                              primary={appointment.service}
+                              secondary={appointment.description}
+                            />
+                          </ListItem>
+                          <ListItem>
+                            <ListItemIcon>
+                              <LocationIcon color="primary" />
+                            </ListItemIcon>
+                            <ListItemText
+                              primary="Status"
+                              secondary={
+                                <Chip
+                                  label={
+                                    appointment.status === 'pending' ? 'Pendente' :
+                                    appointment.status === 'confirmed' ? 'Confirmado' :
+                                    'Concluído'
+                                  }
+                                  color={
+                                    appointment.status === 'pending' ? 'warning' :
+                                    appointment.status === 'confirmed' ? 'success' :
+                                    'info'
+                                  }
+                                  size="small"
+                                />
+                              }
+                            />
+                          </ListItem>
+                          <Divider sx={{ my: 1 }} />
+                        </React.Fragment>
+                      ))}
+                    </List>
+                  </CardContent>
+                </Card>
+              )}
+
+              <Typography variant="h6" gutterBottom sx={{ 
+                fontFamily: '"Playfair Display", serif',
+                fontWeight: 600,
+                mt: 4,
+              }}>
+                Histórico de Agendamentos
+              </Typography>
+              
               <List>
-                {appointments.map((appointment, index) => (
-                  <React.Fragment key={appointment.id}>
-                    <ListItem>
-                      <ListItemIcon>
-                        <CalendarIcon color="primary" />
-                      </ListItemIcon>
-                      <ListItemText
-                        primary={format(new Date(appointment.date.toDate()), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
-                        secondary={
-                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.5 }}>
-                            <TimeIcon sx={{ fontSize: '1rem' }} />
-                            <Typography variant="body2">
-                              {format(new Date(appointment.date.toDate()), 'HH:mm')}
-                            </Typography>
-                          </Box>
-                        }
-                      />
-                    </ListItem>
-                    <ListItem>
-                      <ListItemIcon>
-                        <DescriptionIcon color="primary" />
-                      </ListItemIcon>
-                      <ListItemText
-                        primary={appointment.service}
-                        secondary={appointment.description}
-                      />
-                    </ListItem>
-                    <ListItem>
-                      <ListItemIcon>
-                        <LocationIcon color="primary" />
-                      </ListItemIcon>
-                      <ListItemText
-                        primary="Status"
-                        secondary={
-                          <Chip
-                            label={
-                              appointment.status === 'pending' ? 'Pendente' :
-                              appointment.status === 'confirmed' ? 'Confirmado' :
-                              appointment.status === 'completed' ? 'Concluído' :
-                              'Cancelado'
-                            }
-                            color={
-                              appointment.status === 'pending' ? 'warning' :
-                              appointment.status === 'confirmed' ? 'success' :
-                              appointment.status === 'completed' ? 'info' :
-                              'error'
-                            }
-                            size="small"
-                          />
-                        }
-                      />
-                    </ListItem>
-                    {appointment.pointsEarned && (
+                {appointments
+                  .filter(a => a.status === 'completed')
+                  .map((appointment, index) => (
+                    <React.Fragment key={appointment.id}>
                       <ListItem>
                         <ListItemIcon>
-                          <StarIcon color="primary" />
+                          <CalendarIcon color="primary" />
                         </ListItemIcon>
                         <ListItemText
-                          primary="Pontos Ganhos"
+                          primary={format(new Date(appointment.date.toDate()), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
                           secondary={
-                            <Typography variant="body2" color="primary">
-                              {appointment.pointsEarned} pontos
-                            </Typography>
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.5 }}>
+                              <TimeIcon sx={{ fontSize: '1rem' }} />
+                              <Typography variant="body2">
+                                {format(new Date(appointment.date.toDate()), 'HH:mm')}
+                              </Typography>
+                            </Box>
                           }
                         />
                       </ListItem>
-                    )}
-                    {index < appointments.length - 1 && <Divider sx={{ my: 2 }} />}
-                  </React.Fragment>
-                ))}
+                      <ListItem>
+                        <ListItemIcon>
+                          <DescriptionIcon color="primary" />
+                        </ListItemIcon>
+                        <ListItemText
+                          primary={appointment.service}
+                          secondary={appointment.description}
+                        />
+                      </ListItem>
+                      {appointment.pointsEarned && (
+                        <ListItem>
+                          <ListItemIcon>
+                            <StarIcon color="primary" />
+                          </ListItemIcon>
+                          <ListItemText
+                            primary="Pontos Ganhos"
+                            secondary={
+                              <Typography variant="body2" color="primary">
+                                {appointment.pointsEarned} pontos
+                              </Typography>
+                            }
+                          />
+                        </ListItem>
+                      )}
+                      {index < appointments.length - 1 && <Divider sx={{ my: 2 }} />}
+                    </React.Fragment>
+                  ))}
                 {appointments.length === 0 && (
                   <ListItem>
                     <ListItemText
