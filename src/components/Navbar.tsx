@@ -13,11 +13,12 @@ import {
   Slide,
   useTheme,
   Container,
+  Tooltip,
 } from '@mui/material';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { getUserData, logout } from '../services/authService';
-import { AdminPanelSettings, Menu as MenuIcon, Admin } from '@mui/icons-material';
+import { AdminPanelSettings, Menu as MenuIcon } from '@mui/icons-material';
 import { styled } from '@mui/material/styles';
 
 const StyledAppBar = styled(AppBar)(({ theme }) => ({
@@ -165,7 +166,7 @@ const Navbar = () => {
                     <Button
                       component={Link}
                       to="/admin"
-                      startIcon={<Admin />}
+                      startIcon={<AdminPanelSettings />}
                       sx={{ mr: 2, color: 'white' }}
                     >
                       Painel Admin
