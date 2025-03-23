@@ -52,9 +52,9 @@ import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as ChartTooltip, ResponsiveContainer } from 'recharts';
 import { getPromotions, createPromotion, updatePromotion, deletePromotion } from '../services/promotionService';
-import { getAllAppointments, getAllClients, updateAppointmentStatus } from '../services/appointmentService';
+import { getAllAppointments, updateAppointmentStatus } from '../services/appointmentService';
 import { Appointment } from '../services/appointmentService';
-import { getUserData, updateUserData } from '../services/userService';
+import { getUserData, updateUserData, getAllClients } from '../services/userService';
 
 const AdminPaper = styled(Paper)(({ theme }) => ({
   padding: theme.spacing(3),

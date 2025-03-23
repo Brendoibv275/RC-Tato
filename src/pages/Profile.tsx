@@ -78,6 +78,12 @@ const Profile = () => {
     severity: 'success' as 'success' | 'error',
   });
   const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [financialGoalsDialogOpen, setFinancialGoalsDialogOpen] = useState(false);
+  const [financialGoalsForm, setFinancialGoalsForm] = useState({
+    monthly: 0,
+    current: 0,
+    lastMonth: 0,
+  });
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -191,6 +197,32 @@ const Profile = () => {
     return levels[0];
   };
 
+  const handleFinancialGoalsUpdate = async () => {
+    try {
+      if (user) {
+        await updateUserData(user.uid, {
+          monthlyGoal: financialGoalsForm.monthly,
+          currentRevenue: financialGoalsForm.current,
+          lastMonthRevenue: financialGoalsForm.lastMonth,
+        });
+        setFinancialGoals(financialGoalsForm);
+        setSnackbar({
+          open: true,
+          message: 'Metas financeiras atualizadas com sucesso!',
+          severity: 'success',
+        });
+        setFinancialGoalsDialogOpen(false);
+      }
+    } catch (error) {
+      console.error('Erro ao atualizar metas financeiras:', error);
+      setSnackbar({
+        open: true,
+        message: 'Erro ao atualizar metas financeiras',
+        severity: 'error',
+      });
+    }
+  };
+
   if (loading) {
     return (
       <Box
@@ -283,14 +315,25 @@ const Profile = () => {
 
                 {/* Seção de Metas Financeiras */}
                 <Box sx={{ width: '100%', mt: 4 }}>
-                  <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                    <TrendingUpIcon color="primary" sx={{ mr: 1 }} />
-                    <Typography variant="h6" sx={{ 
-                      fontFamily: '"Playfair Display", serif',
-                      fontWeight: 600,
-                    }}>
-                      Metas Financeiras
-                    </Typography>
+                  <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                      <TrendingUpIcon color="primary" sx={{ mr: 1 }} />
+                      <Typography variant="h6" sx={{ 
+                        fontFamily: '"Playfair Display", serif',
+                        fontWeight: 600,
+                      }}>
+                        Metas Financeiras
+                      </Typography>
+                    </Box>
+                    <IconButton
+                      onClick={() => {
+                        setFinancialGoalsForm(financialGoals);
+                        setFinancialGoalsDialogOpen(true);
+                      }}
+                      color="primary"
+                    >
+                      <EditIcon />
+                    </IconButton>
                   </Box>
                   
                   <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
@@ -447,6 +490,64 @@ const Profile = () => {
               disabled={saving}
             >
               {saving ? 'Salvando...' : 'Salvar Alterações'}
+            </Button>
+          </DialogActions>
+        </Dialog>
+
+        <Dialog
+          open={financialGoalsDialogOpen}
+          onClose={() => setFinancialGoalsDialogOpen(false)}
+          maxWidth="sm"
+          fullWidth
+        >
+          <DialogTitle>Editar Metas Financeiras</DialogTitle>
+          <DialogContent>
+            <Grid container spacing={2} sx={{ mt: 1 }}>
+              <Grid item xs={12}>
+                <TextField
+                  fullWidth
+                  label="Meta Mensal"
+                  type="number"
+                  value={financialGoalsForm.monthly}
+                  onChange={(e) => setFinancialGoalsForm(prev => ({
+                    ...prev,
+                    monthly: Number(e.target.value)
+                  }))}
+                  variant="outlined"
+                />
+              </Grid>
+              <Grid item xs={12}>
+                <TextField
+                  fullWidth
+                  label="Receita Atual"
+                  type="number"
+                  value={financialGoalsForm.current}
+                  onChange={(e) => setFinancialGoalsForm(prev => ({
+                    ...prev,
+                    current: Number(e.target.value)
+                  }))}
+                  variant="outlined"
+                />
+              </Grid>
+              <Grid item xs={12}>
+                <TextField
+                  fullWidth
+                  label="Receita do Mês Anterior"
+                  type="number"
+                  value={financialGoalsForm.lastMonth}
+                  onChange={(e) => setFinancialGoalsForm(prev => ({
+                    ...prev,
+                    lastMonth: Number(e.target.value)
+                  }))}
+                  variant="outlined"
+                />
+              </Grid>
+            </Grid>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => setFinancialGoalsDialogOpen(false)}>Cancelar</Button>
+            <Button onClick={handleFinancialGoalsUpdate} variant="contained">
+              Salvar Alterações
             </Button>
           </DialogActions>
         </Dialog>
