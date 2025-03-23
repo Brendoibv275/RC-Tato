@@ -2,12 +2,13 @@ import { doc, getDoc, updateDoc, collection, query, where, getDocs } from 'fireb
 import { db } from '../config/firebase';
 
 export interface UserData {
+  id?: string;
   name: string;
   email: string;
   phone?: string;
   isAdmin: boolean;
   loyaltyPoints?: number;
-  totalAppointments?: number;w
+  totalAppointments?: number;
   monthlyGoal?: number;
   currentRevenue?: number;
   lastMonthRevenue?: number;
@@ -18,7 +19,10 @@ export const getUserData = async (userId: string): Promise<UserData | null> => {
   try {
     const userDoc = await getDoc(doc(db, 'users', userId));
     if (userDoc.exists()) {
-      return userDoc.data() as UserData;
+      return {
+        id: userDoc.id,
+        ...userDoc.data()
+      } as UserData;
     }
     return null;
   } catch (error) {
@@ -42,22 +46,19 @@ export const getAllClients = async (): Promise<UserData[]> => {
     const usersRef = collection(db, 'users');
     const q = query(usersRef, where('isAdmin', '==', false));
     const querySnapshot = await getDocs(q);
-    return querySnapshot.docs.map(doc => {
-      const data = doc.data();
-      return {
-        id: doc.id,
-        name: data.name || '',
-        email: data.email || '',
-        phone: data.phone,
-        isAdmin: false,
-        loyaltyPoints: data.loyaltyPoints || 0,
-        totalAppointments: data.totalAppointments || 0,
-        monthlyGoal: data.monthlyGoal || 0,
-        currentRevenue: data.currentRevenue || 0,
-        lastMonthRevenue: data.lastMonthRevenue || 0,
-        createdAt: data.createdAt || new Date(),
-      };
-    });
+    return querySnapshot.docs.map(doc => ({
+      id: doc.id,
+      name: doc.data().name || '',
+      email: doc.data().email || '',
+      phone: doc.data().phone || '',
+      isAdmin: false,
+      loyaltyPoints: doc.data().loyaltyPoints || 0,
+      totalAppointments: doc.data().totalAppointments || 0,
+      monthlyGoal: doc.data().monthlyGoal || 0,
+      currentRevenue: doc.data().currentRevenue || 0,
+      lastMonthRevenue: doc.data().lastMonthRevenue || 0,
+      createdAt: doc.data().createdAt || new Date(),
+    }));
   } catch (error) {
     console.error('Erro ao buscar todos os clientes:', error);
     throw error;
