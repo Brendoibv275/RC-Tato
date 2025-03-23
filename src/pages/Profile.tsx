@@ -40,14 +40,17 @@ import {
   EmojiEvents as EmojiEventsIcon,
   TrendingUp as TrendingUpIcon,
   AdminPanelSettings,
+  AttachMoney,
+  BarChart as BarChartIcon,
 } from '@mui/icons-material';
 import { useAuth } from '../contexts/AuthContext';
 import { getUserData, updateUserData } from '../services/authService';
-import { getAppointmentsByUserId } from '../services/appointmentService';
+import { getAppointmentsByUserId, getAllAppointments } from '../services/appointmentService';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
+import { BarChart, CartesianGrid, XAxis, YAxis, Bar, ResponsiveContainer, Tooltip as RechartsTooltip } from 'recharts';
 
 const Profile = () => {
   const { user, isAdmin } = useAuth();
@@ -55,6 +58,16 @@ const Profile = () => {
   const [saving, setSaving] = useState(false);
   const [userData, setUserData] = useState<any>(null);
   const [appointments, setAppointments] = useState<any[]>([]);
+  const [financialGoals, setFinancialGoals] = useState({
+    monthly: 0,
+    current: 0,
+    lastMonth: 0,
+  });
+  const [monthlyStats, setMonthlyStats] = useState({
+    pending: 0,
+    confirmed: 0,
+    completed: 0,
+  });
   const [formData, setFormData] = useState({
     name: '',
     phone: '',
@@ -78,10 +91,35 @@ const Profile = () => {
               name: data.name || '',
               phone: data.phone || '',
             });
+            if (isAdmin) {
+              setFinancialGoals({
+                monthly: data.monthlyGoal || 0,
+                current: data.currentRevenue || 0,
+                lastMonth: data.lastMonthRevenue || 0,
+              });
+            }
           }
 
           const userAppointments = await getAppointmentsByUserId(user.uid);
           setAppointments(userAppointments);
+
+          if (isAdmin) {
+            // Carregar estatísticas mensais
+            const currentMonth = new Date().getMonth();
+            const currentYear = new Date().getFullYear();
+            const allAppointments = await getAllAppointments();
+            
+            const monthlyAppointments = allAppointments.filter(app => {
+              const appDate = app.date.toDate();
+              return appDate.getMonth() === currentMonth && appDate.getFullYear() === currentYear;
+            });
+
+            setMonthlyStats({
+              pending: monthlyAppointments.filter(a => a.status === 'pending').length,
+              confirmed: monthlyAppointments.filter(a => a.status === 'confirmed').length,
+              completed: monthlyAppointments.filter(a => a.status === 'completed').length,
+            });
+          }
         } catch (error) {
           console.error('Erro ao carregar dados:', error);
           setSnackbar({
@@ -96,7 +134,7 @@ const Profile = () => {
     };
 
     loadData();
-  }, [user]);
+  }, [user, isAdmin]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -168,6 +206,265 @@ const Profile = () => {
     );
   }
 
+  if (isAdmin) {
+    return (
+      <Container sx={{ py: 8 }}>
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8 }}
+        >
+          <Grid container spacing={4}>
+            {/* Seção de Perfil e Metas Financeiras */}
+            <Grid item xs={12} md={4}>
+              <Paper
+                sx={{
+                  p: 3,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  backgroundColor: '#1e1e1e',
+                  borderRadius: '16px',
+                  boxShadow: '0 8px 32px rgba(0,0,0,0.3)',
+                }}
+              >
+                <Box sx={{ position: 'relative', width: '100%', display: 'flex', justifyContent: 'center' }}>
+                  <Avatar
+                    sx={{
+                      width: 120,
+                      height: 120,
+                      bgcolor: '#FF4D4D',
+                      fontSize: '3rem',
+                      mb: 2,
+                    }}
+                  >
+                    {userData?.name?.[0]?.toUpperCase() || '?'}
+                  </Avatar>
+                  <Tooltip title="Editar Perfil">
+                    <IconButton
+                      onClick={() => setEditDialogOpen(true)}
+                      sx={{
+                        position: 'absolute',
+                        bottom: 0,
+                        right: '25%',
+                        backgroundColor: '#FF4D4D',
+                        '&:hover': {
+                          backgroundColor: '#FF6B6B',
+                        },
+                      }}
+                    >
+                      <EditIcon />
+                    </IconButton>
+                  </Tooltip>
+                </Box>
+                
+                <Typography variant="h5" gutterBottom sx={{ 
+                  fontFamily: '"Playfair Display", serif',
+                  fontWeight: 600,
+                }}>
+                  {userData?.name || 'Administrador'}
+                </Typography>
+                <Typography variant="body2" color="text.secondary" gutterBottom>
+                  {userData?.email}
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  {userData?.phone || 'Telefone não cadastrado'}
+                </Typography>
+
+                <Button
+                  variant="contained"
+                  color="primary"
+                  startIcon={<AdminPanelSettings />}
+                  onClick={() => navigate('/admin')}
+                  sx={{ mt: 2, width: '100%' }}
+                >
+                  Acessar Painel Admin
+                </Button>
+
+                {/* Seção de Metas Financeiras */}
+                <Box sx={{ width: '100%', mt: 4 }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                    <TrendingUpIcon color="primary" sx={{ mr: 1 }} />
+                    <Typography variant="h6" sx={{ 
+                      fontFamily: '"Playfair Display", serif',
+                      fontWeight: 600,
+                    }}>
+                      Metas Financeiras
+                    </Typography>
+                  </Box>
+                  
+                  <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                    <AttachMoney color="primary" sx={{ mr: 1 }} />
+                    <Typography variant="h4" color="primary" sx={{ mr: 1 }}>
+                      R$ {financialGoals.current.toFixed(2)}
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      / R$ {financialGoals.monthly.toFixed(2)}
+                    </Typography>
+                  </Box>
+                  
+                  <LinearProgress 
+                    variant="determinate" 
+                    value={(financialGoals.current / financialGoals.monthly) * 100}
+                    sx={{ 
+                      height: 8, 
+                      borderRadius: 4,
+                      backgroundColor: 'rgba(255,255,255,0.1)',
+                      '& .MuiLinearProgress-bar': {
+                        backgroundColor: '#FF4D4D',
+                      }
+                    }}
+                  />
+                  
+                  <Box sx={{ display: 'flex', alignItems: 'center', mt: 2 }}>
+                    <TrendingUpIcon color="primary" sx={{ mr: 1 }} />
+                    <Typography variant="body2" color="text.secondary">
+                      Meta mensal: R$ {(financialGoals.monthly - financialGoals.current).toFixed(2)}
+                    </Typography>
+                  </Box>
+                </Box>
+              </Paper>
+            </Grid>
+
+            {/* Seção de Gráficos e Estatísticas */}
+            <Grid item xs={12} md={8}>
+              <Paper
+                sx={{
+                  p: 3,
+                  backgroundColor: '#1e1e1e',
+                  borderRadius: '16px',
+                  boxShadow: '0 8px 32px rgba(0,0,0,0.3)',
+                }}
+              >
+                <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
+                  <BarChartIcon color="primary" sx={{ mr: 1 }} />
+                  <Typography variant="h5" sx={{ 
+                    fontFamily: '"Playfair Display", serif',
+                    fontWeight: 600,
+                  }}>
+                    Estatísticas do Mês
+                  </Typography>
+                </Box>
+
+                <Grid container spacing={3}>
+                  <Grid item xs={12} md={4}>
+                    <Card sx={{ backgroundColor: 'rgba(255,77,77,0.1)' }}>
+                      <CardContent>
+                        <Typography variant="h6" color="warning.main">
+                          {monthlyStats.pending}
+                        </Typography>
+                        <Typography variant="body2" color="text.secondary">
+                          Pendentes
+                        </Typography>
+                      </CardContent>
+                    </Card>
+                  </Grid>
+                  <Grid item xs={12} md={4}>
+                    <Card sx={{ backgroundColor: 'rgba(255,77,77,0.1)' }}>
+                      <CardContent>
+                        <Typography variant="h6" color="info.main">
+                          {monthlyStats.confirmed}
+                        </Typography>
+                        <Typography variant="body2" color="text.secondary">
+                          Confirmados
+                        </Typography>
+                      </CardContent>
+                    </Card>
+                  </Grid>
+                  <Grid item xs={12} md={4}>
+                    <Card sx={{ backgroundColor: 'rgba(255,77,77,0.1)' }}>
+                      <CardContent>
+                        <Typography variant="h6" color="success.main">
+                          {monthlyStats.completed}
+                        </Typography>
+                        <Typography variant="body2" color="text.secondary">
+                          Concluídos
+                        </Typography>
+                      </CardContent>
+                    </Card>
+                  </Grid>
+                </Grid>
+
+                <Box sx={{ height: 300, mt: 4 }}>
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={[
+                      { name: 'Pendentes', value: monthlyStats.pending },
+                      { name: 'Confirmados', value: monthlyStats.confirmed },
+                      { name: 'Concluídos', value: monthlyStats.completed },
+                    ]}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="name" />
+                      <YAxis />
+                      <RechartsTooltip />
+                      <Bar dataKey="value" fill="#FF4D4D" />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </Box>
+              </Paper>
+            </Grid>
+          </Grid>
+        </motion.div>
+
+        <Dialog 
+          open={editDialogOpen} 
+          onClose={() => setEditDialogOpen(false)}
+          maxWidth="sm"
+          fullWidth
+        >
+          <DialogTitle>Editar Dados do Perfil</DialogTitle>
+          <DialogContent>
+            <form onSubmit={handleSubmit}>
+              <Grid container spacing={2} sx={{ mt: 1 }}>
+                <Grid item xs={12}>
+                  <TextField
+                    fullWidth
+                    label="Nome"
+                    name="name"
+                    value={formData.name}
+                    onChange={handleChange}
+                    variant="outlined"
+                  />
+                </Grid>
+                <Grid item xs={12}>
+                  <TextField
+                    fullWidth
+                    label="Telefone"
+                    name="phone"
+                    value={formData.phone}
+                    onChange={handleChange}
+                    variant="outlined"
+                    placeholder="(98) 99999-9999"
+                  />
+                </Grid>
+              </Grid>
+            </form>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => setEditDialogOpen(false)}>Cancelar</Button>
+            <Button 
+              onClick={handleSubmit} 
+              variant="contained"
+              disabled={saving}
+            >
+              {saving ? 'Salvando...' : 'Salvar Alterações'}
+            </Button>
+          </DialogActions>
+        </Dialog>
+
+        <Snackbar
+          open={snackbar.open}
+          autoHideDuration={6000}
+          onClose={() => setSnackbar({ ...snackbar, open: false })}
+          anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+        >
+          <Alert onClose={() => setSnackbar({ ...snackbar, open: false })} severity={snackbar.severity}>
+            {snackbar.message}
+          </Alert>
+        </Snackbar>
+      </Container>
+    );
+  }
+
   const pendingAppointments = appointments.filter(a => a.status === 'pending' || a.status === 'confirmed');
   const currentLevel = getNextLevel(userData?.loyaltyPoints || 0);
 
@@ -234,18 +531,6 @@ const Profile = () => {
               <Typography variant="body2" color="text.secondary">
                 {userData?.phone || 'Telefone não cadastrado'}
               </Typography>
-
-              {isAdmin && (
-                <Button
-                  variant="contained"
-                  color="primary"
-                  startIcon={<AdminPanelSettings />}
-                  onClick={() => navigate('/admin')}
-                  sx={{ mt: 2, width: '100%' }}
-                >
-                  Acessar Painel Admin
-                </Button>
-              )}
 
               {/* Seção de Gamificação */}
               <Box sx={{ width: '100%', mt: 4 }}>

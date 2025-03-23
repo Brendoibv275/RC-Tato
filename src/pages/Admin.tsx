@@ -98,6 +98,17 @@ function TabPanel(props: TabPanelProps) {
   );
 }
 
+interface Client {
+  id: string;
+  name: string;
+  email: string;
+  phone: string;
+  createdAt: any;
+  totalSpent: number;
+  totalAppointments: number;
+  lastAppointment?: any;
+}
+
 const Admin = () => {
   const { user } = useAuth();
   const [tabValue, setTabValue] = useState(0);
@@ -110,7 +121,7 @@ const Admin = () => {
     totalPoints: 0,
   });
   const [appointments, setAppointments] = useState<Appointment[]>([]);
-  const [clients, setClients] = useState<any[]>([]);
+  const [clients, setClients] = useState<Client[]>([]);
   const [promotions, setPromotions] = useState<any[]>([]);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedPromotion, setSelectedPromotion] = useState<any>(null);
@@ -138,9 +149,27 @@ const Admin = () => {
       const appointmentsData = await getAllAppointments();
       setAppointments(appointmentsData);
 
-      // Carregar clientes
+      // Carregar clientes com informações detalhadas
       const clientsData = await getAllClients();
-      setClients(clientsData);
+      const clientsWithDetails = await Promise.all(
+        clientsData.map(async (client) => {
+          const clientAppointments = appointmentsData.filter(a => a.userId === client.id);
+          const totalSpent = clientAppointments
+            .filter(a => a.status === 'completed')
+            .reduce((sum, a) => sum + (a.price || 0), 0);
+          
+          const lastAppointment = clientAppointments
+            .sort((a, b) => b.date.toDate().getTime() - a.date.toDate().getTime())[0];
+
+          return {
+            ...client,
+            totalSpent,
+            totalAppointments: clientAppointments.length,
+            lastAppointment,
+          };
+        })
+      );
+      setClients(clientsWithDetails);
 
       // Carregar promoções
       const promotionsData = await getPromotions();
@@ -634,8 +663,10 @@ const Admin = () => {
                       <TableCell>Nome</TableCell>
                       <TableCell>Email</TableCell>
                       <TableCell>Telefone</TableCell>
-                      <TableCell>Pontos</TableCell>
+                      <TableCell>Data de Cadastro</TableCell>
+                      <TableCell>Total Gasto</TableCell>
                       <TableCell>Total de Agendamentos</TableCell>
+                      <TableCell>Último Agendamento</TableCell>
                       <TableCell>Ações</TableCell>
                     </TableRow>
                   </TableHead>
@@ -645,8 +676,20 @@ const Admin = () => {
                         <TableCell>{client.name}</TableCell>
                         <TableCell>{client.email}</TableCell>
                         <TableCell>{client.phone}</TableCell>
-                        <TableCell>{client.loyaltyPoints || 0}</TableCell>
-                        <TableCell>{client.totalAppointments || 0}</TableCell>
+                        <TableCell>
+                          {format(client.createdAt.toDate(), 'dd/MM/yyyy', { locale: ptBR })}
+                        </TableCell>
+                        <TableCell>
+                          R$ {client.totalSpent.toFixed(2)}
+                        </TableCell>
+                        <TableCell>{client.totalAppointments}</TableCell>
+                        <TableCell>
+                          {client.lastAppointment ? (
+                            format(client.lastAppointment.date.toDate(), 'dd/MM/yyyy', { locale: ptBR })
+                          ) : (
+                            'Nenhum'
+                          )}
+                        </TableCell>
                         <TableCell>
                           <Tooltip title="Ver detalhes">
                             <IconButton color="primary">
