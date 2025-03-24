@@ -30,12 +30,12 @@ const Footer = () => {
             },
           }}
         >
-          Brendo Dutra
+          BD
           <InstagramIcon sx={{ ml: 0.5, fontSize: '1rem' }} />
         </Link>
       </Typography>
       <Typography variant="body2" color="text.secondary">
-        © {new Date().getFullYear()} RC Tato. Todos os direitos reservados.
+        © {new Date().getFullYear()} R7 Tatoo. Todos os direitos reservados.
       </Typography>
     </Box>
   );
