@@ -43,24 +43,34 @@ export const updateUserData = async (userId: string, data: Partial<UserData>): P
 
 export const getAllClients = async (): Promise<UserData[]> => {
   try {
+    console.log('Iniciando busca de clientes...');
     const usersRef = collection(db, 'users');
     const q = query(usersRef, where('isAdmin', '==', false));
     const querySnapshot = await getDocs(q);
-    return querySnapshot.docs.map(doc => ({
-      id: doc.id,
-      name: doc.data().name || '',
-      email: doc.data().email || '',
-      phone: doc.data().phone || '',
-      isAdmin: false,
-      loyaltyPoints: doc.data().loyaltyPoints || 0,
-      totalAppointments: doc.data().totalAppointments || 0,
-      monthlyGoal: doc.data().monthlyGoal || 0,
-      currentRevenue: doc.data().currentRevenue || 0,
-      lastMonthRevenue: doc.data().lastMonthRevenue || 0,
-      createdAt: doc.data().createdAt || new Date(),
-    }));
+    console.log(`Encontrados ${querySnapshot.size} clientes`);
+    
+    const clients = querySnapshot.docs.map(doc => {
+      const data = doc.data();
+      console.log('Dados do cliente:', { id: doc.id, ...data });
+      return {
+        id: doc.id,
+        name: data.name || '',
+        email: data.email || '',
+        phone: data.phone || '',
+        isAdmin: data.isAdmin || false,
+        loyaltyPoints: data.loyaltyPoints || 0,
+        totalAppointments: data.totalAppointments || 0,
+        monthlyGoal: data.monthlyGoal || 0,
+        currentRevenue: data.currentRevenue || 0,
+        lastMonthRevenue: data.lastMonthRevenue || 0,
+        createdAt: data.createdAt || new Date(),
+      };
+    });
+    
+    console.log('Clientes processados:', clients);
+    return clients;
   } catch (error) {
-    console.error('Erro ao buscar todos os clientes:', error);
+    console.error('Erro ao buscar clientes:', error);
     throw error;
   }
 };
